@@ -1,0 +1,61 @@
+version: 2.1
+
+executors:
+  sphinx:
+    description: A docker image with spinx-docs and all extensions necassary for fortran and publishing to github pages.
+    docker:
+      - image: niemacka/sphinx
+commands:
+  test:
+  description: tests that sphinx can run without errors before publishing.
+  steps:
+    - checkout
+    - run:
+        command: |
+          git config --global user.email "andrewn@ucar.edu"
+          git config --global user.name "aNiemack"
+          git describe --tags --abbrev=0 > version
+          git checkout gh-pages
+          git checkout master
+          make html
+          make latexpdf
+jobs:
+  publish:
+  executor: sphinx
+  description: Publish sphinx html and pdf documents to gh-pages.
+  steps:
+    - test
+    - checkout
+    - run:
+        command: |
+          git config --global user.email "andrewn@ucar.edu"
+          git config --global user.name "aNiemack"
+          git describe --tags --abbrev=0 > version
+          git checkout master
+          VERSION=`head -1 version`
+          make html
+          make latexpdf
+          cd _build
+          mv latex/ /root/project/
+          cd /root/project
+          mv latex/ "$VERSION-pdf"
+          cd _build
+          mv html/ /root/project/
+          cd /root/project
+          mv html/ "$VERSION-html"
+          git add --all
+          git commit -m "new docs"
+          git checkout gh-pages
+          git checkout master "$VERSION-pdf"
+          git checkout master "$VERSION-html"
+          mv "$VERSION-pdf" _pdfs/
+          mv "$VERSION-html" _documents/
+          cd _documents/"$VERSION-html"
+          echo --- | cat - index.html > temp && mv temp index.html
+          echo --- | cat - index.html > temp && mv temp index.html
+          mv index.html $VERSION.html
+          sed -i "s~.*<h3><a href=\"#\">Table Of Contents</a></h3>.*~<h3><a href=\"https://ncar.github.io/dart-test/documents/$VERSION-html/$VERSION.html\">Table Of Contents</a></h3>~g" $VERSION.html
+          cd /root/project            
+          git add --all
+          git commit -m "new version"
+          git push -u origin gh-pages 
