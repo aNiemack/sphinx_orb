@@ -11,7 +11,6 @@ jobs:
   executor: sphinx
   description: Publish sphinx html and pdf documents to gh-pages.
   steps:
-    - test
     - checkout
     - run:
         command: |
