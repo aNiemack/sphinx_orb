@@ -2,7 +2,7 @@ version: 2.1
 
 executors:
   sphinx:
-    description: A docker image with spinx-docs and all extensions necessary for fortran and publishing to github pages.
+    description: A docker image with sphinx-docs and all extensions necessary for fortran and publishing to github pages.
     docker:
       - image: niemacka/sphinx
 jobs:
