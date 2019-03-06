@@ -9,6 +9,15 @@ jobs:
   publish:
     executor: sphinx
     description: Publish sphinx html and pdf documents to gh-pages.
+    parameters:
+      html:
+        description: Location for sphinx html build in gh-pages.
+        type: string
+        default: "_documents"
+      pdf:
+        description: Location for sphinx pdf build in gh-pages.
+        type: string
+        default: "_pdfs"
     steps:
       - checkout
       - run:
@@ -18,6 +27,9 @@ jobs:
             git describe --tags --abbrev=0 > version
             git checkout master
             VERSION=`head -1 version`
+            LOC=$(find /root/project -name conf.py)
+            LOC2=${LOC::-7}
+            cd $LOC2
             make html
             make latexpdf
             cd _build
@@ -33,13 +45,15 @@ jobs:
             git checkout gh-pages
             git checkout master "$VERSION-pdf"
             git checkout master "$VERSION-html"
-            mv "$VERSION-pdf" _pdfs/
-            mv "$VERSION-html" _documents/
-            cd _documents/"$VERSION-html"
+            mkdir -p << parameters.html >>
+            mkdir -p << parameters.pdf >>
+            mv "$VERSION-pdf" << parameters.pdf >>
+            mv "$VERSION-html" << parameters.html >>
+            cd << parameters.html >>/"$VERSION-html"
             echo --- | cat - index.html > temp && mv temp index.html
             echo --- | cat - index.html > temp && mv temp index.html
             mv index.html $VERSION.html
-            cd /root/project            
+            cd /root/project         
             git add --all
             git commit -m "new version"
             git push -u origin gh-pages 
